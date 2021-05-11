@@ -79,4 +79,18 @@ case $INPUT_CASE in
     JSON="$JSONRUN5_HF"
     ISINPUTO2=1
     ISMC=1;;
+  11)
+    INPUT_LABEL="Run 5, p-p MC 14 TeV oniaX enriched, |eta|<4, Scenario 3, oniaX analysis setup using dpl-config_run5_oniaX.json"
+    INPUT_DIR="/data/Run5/MC/pp_14TeV/ONIAX_ETAMAX4_S3_20210511/data/Run5/MC/pp_14TeV/ONIAX_ETAMAX4_S3_20210511"
+    INPUT_FILES="AODRun5.*.root"
+    JSON="$JSONRUN5_ONIAX"
+    ISINPUTO2=1
+    ISMC=1;;
+  12)
+    INPUT_LABEL="Run 5, p-p MC 14 TeV Multicharm, Scenario 3, HF analysis setup using dpl-config_run5_hf.json"
+    INPUT_DIR="/data/Run5/MC/pp_14TeV/MULTICHARM_S3_20210509"
+    INPUT_FILES="AODRun5.*.root"
+    JSON="$JSONRUN5_HF"
+    ISINPUTO2=1
+    ISMC=1;;
 esac
