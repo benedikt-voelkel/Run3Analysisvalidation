@@ -23,7 +23,7 @@
                 "100."
             ]
         },
-        "etamax_2prong": "1.44",
+        "etamax_2prong": "4.0",
         "cuts_singletrack_2prong": {
             "values": [
                 ["0.000", "10."],
@@ -259,7 +259,7 @@
         "d_pidRICHMaxpT": "15.",
         "d_TPCNClsFindablePIDCut": "-9999",
         "d_nSigmaTPC": "1000.",
-        "d_nSigmaTOF": "3.",
+        "d_nSigmaTOF": "1000.",
         "d_nSigmaRICH": "3.",
         "pTBins": {
             "values": [
@@ -369,7 +369,7 @@
         "d_selectionFlagXic": "0"
     },
     "hf-task-jpsi": {
-        "cutYCandMax": "1.44",
+        "cutYCandMax": "4.0",
         "d_selectionFlagJpsi": "0",
         "pTBins": {
             "values": [
@@ -387,7 +387,7 @@
         }
     },
     "hf-task-jpsi-mc": {
-        "cutYCandMax": "1.44",
+        "cutYCandMax": "4.0",
         "d_selectionFlagJpsi": "0"
     },
     "hf-task-x": {
@@ -423,8 +423,8 @@
         "make-eff": "0"
     },
     "qa-tracking-efficiency-muon": {
-        "eta-min": "-3",
-        "eta-max": "3",
+        "eta-min": "-4",
+        "eta-max": "4",
         "phi-min": "0",
         "phi-max": "6.28318977",
         "pt-min": "0",
@@ -437,8 +437,8 @@
         "make-eff": "0"
     },
     "qa-tracking-efficiency-pion": {
-        "eta-min": "-3",
-        "eta-max": "3",
+        "eta-min": "-4",
+        "eta-max": "4",
         "phi-min": "0",
         "phi-max": "6.28318977",
         "pt-min": "0",
@@ -451,8 +451,8 @@
         "make-eff": "0"
     },
     "qa-tracking-efficiency-proton": {
-        "eta-min": "-3",
-        "eta-max": "3",
+        "eta-min": "-4",
+        "eta-max": "4",
         "phi-min": "0",
         "phi-max": "6.28318977",
         "pt-min": "0",

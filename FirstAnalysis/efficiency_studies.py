@@ -28,7 +28,7 @@ def efficiencytracking(var):
     ]
     color_list = [1, 2, 4, 6, 8]
     marker_list = [20, 21, 22, 34, 45]
-    fileo2 = TFile("../codeHF/AnalysisResults_O2.root")
+    fileo2 = TFile("../codeHF/AnalysisResults_O2_eta4.root")
 
     c1 = TCanvas("c1", "Efficiency")
     gStyle.SetOptStat(0)
@@ -95,7 +95,7 @@ def efficiencytracking(var):
 
 def efficiencyhadron(had, var):
     # extract the efficiency vs pT for single species(D0, Lc, Jpsi)
-    fileo2 = TFile("../codeHF/AnalysisResults_O2.root")
+    fileo2 = TFile("../codeHF/AnalysisResults_O2_eta4.root")
     ceffhf = TCanvas("ceffhf", "A Simple Graph Example")
     ceffhf.SetCanvasSize(1500, 700)
     ceffhf.Divide(2, 1)
@@ -112,7 +112,7 @@ def efficiencyhadron(had, var):
 
 
 var_list = ["Pt", "Eta", "Phi"]
-hfhadron_list = ["d0", "dplus", "lc", "xic", "jpsi"]
+#hfhadron_list = ["d0", "dplus", "lc", "xic", "jpsi"]
 
 for var in var_list:
     efficiencytracking(var)
