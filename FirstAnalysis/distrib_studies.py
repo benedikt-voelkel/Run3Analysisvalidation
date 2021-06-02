@@ -5,30 +5,15 @@ from math import ceil, sqrt
 import yaml
 from ROOT import TH2F, TCanvas, TFile, TLatex, TLegend, gPad, gROOT, gStyle
 
+from hfplot.plot_spec_root import ROOTFigure
 
-def createCanvas(nplots, name, sizeX=1500, sizeY=900):
-    """
-    Creates a canvas and automatically divides it in a nxn grid of subpads,
-    where n is the lowest value for which all the plots can be drawn
-
-    Returns the canvas
-    """
-    canvas = TCanvas(name, "canvas title")
-    # automatically determine the grid of plots based on the number of plots
-    plts = ceil(sqrt(float(nplots)))
-    canvas.SetCanvasSize(sizeX, sizeY)
-    canvas.Divide(plts, plts)
-    return canvas
-
-
-def saveCanvas(canvas, title, *fileFormats, outputdir="outputPlots"):
+def makeSavePaths(canvas, title, *fileFormats, outputdir="outputPlots"):
     """
     Saves the canvas as the desired output format in an output directory (default = outputPlots)
     """
     if not os.path.exists(outputdir):
         os.makedirs(outputdir)
-    for fileFormat in fileFormats:
-        canvas.SaveAs(outputdir + "/" + title + fileFormat)
+    return [outputdir + "/" + title + fileFormat for fileFormat in fileFormats]
 
 
 def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
@@ -67,6 +52,15 @@ def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
     lptMin = []
     lptMax = []
 
+    # Define some styles
+    style_sig = ROOTStyle1D()
+    style_sig.linecolor = 2
+    style_sig.draw_option = "HIST"
+    bkg_style = ROOTStyle1D()
+    bkg_style.linecolor = 1
+    bkg_style.draw_option = "HIST"
+
+
     for index, var in enumerate(lvarlist):
         ymin = lymin[index]
         ymax = lymax[index]
@@ -75,14 +69,6 @@ def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
         varlatex = lvarlatex[index]
         lhistosigvar = []
         lhistobkgvar = []
-        hempty = TH2F("hemptyvar%d" % index, "", 100, xmin, xmax, 100, ymin, ymax)
-        hempty.GetYaxis().SetTitle("Entries")
-        hempty.GetXaxis().SetTitle(varlatex)
-        hempty.GetXaxis().SetTitleOffset(1.0)
-        hempty.GetYaxis().SetTitleOffset(1.0)
-        hempty.GetXaxis().SetTitleSize(0.045)
-        hempty.GetYaxis().SetTitleSize(0.045)
-        lhemptyvar.append(hempty)
         histonamesig = lhistonamesig[index]
         histonamebkg = lhistonamebkg[index]
         hsig = fileSig.Get(f"{dirname}/{histonamesig}")
@@ -97,92 +83,58 @@ def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
             )
             lhistosigvar.append(hsig_px)
             lhistobkgvar.append(hbkg_px)
-            if index == 0:
-                ptMin = hsig.GetYaxis().GetBinLowEdge(iptBin + 1)
-                ptMax = ptMin + hsig.GetYaxis().GetBinWidth(iptBin + 1)
-                lptMin.append(ptMin)
-                lptMax.append(ptMax)
+            # if index == 0:
+            #     ptMin = hsig.GetYaxis().GetBinLowEdge(iptBin + 1)
+            #     ptMax = ptMin + hsig.GetYaxis().GetBinWidth(iptBin + 1)
+            #     lptMin.append(ptMin)
+            #     lptMax.append(ptMax)
 
         lhistosig.append(lhistosigvar)
         lhistobkg.append(lhistobkgvar)
 
     for index, var in enumerate(lvarlist):
-        cpt = createCanvas(nPtBins, f"{var}_canvas")
+        n_cols_rows = ceil(sqrt(nPtBins))
+        figure = ROOTFigure(n_cols_rows, n_cols_rows, row_margin=0.05, column_margin=0.05)
+
         dolog = ldolog[index]
         dologx = ldologx[index]
-        ymin = lymin[index]
-        ymax = lymax[index]
-        xmin = lxmin[index]
         rebin = lrebin[index]
-        xmax = lxmax[index]
-        leg = TLegend(0.2, 0.75, 0.8, 0.85, "")
-        leglist = [TLegend(leg) for _ in range(nPtBins)]
         for iptBin in range(nPtBins):
-            cpt.cd(iptBin + 1)
-            if rebin > 1:
-                lhistosig[index][iptBin].RebinX(rebin)
-                lhistobkg[index][iptBin].RebinX(rebin)
-            lhistosig[index][iptBin].GetXaxis().SetRangeUser(xmin, xmax)
-            lhistobkg[index][iptBin].GetXaxis().SetRangeUser(xmax, xmax)
-            lhistosig[index][iptBin].SetMaximum(ymax)
-            lhistobkg[index][iptBin].SetMaximum(ymax)
-            if dolog == 1:
-                gPad.SetLogy()
-            if dologx == 1:
-                gPad.SetLogx()
-            nSigEntries = lhistosig[index][iptBin].Integral()
-            nBkgEntries = lhistobkg[index][iptBin].Integral()
-            if normalized:
-                if nSigEntries != 0:
-                    for ibin in range(lhistosig[index][iptBin].GetNbinsX()):
-                        bincontent = lhistosig[index][iptBin].GetBinContent(ibin + 1)
-                        lhistosig[index][iptBin].SetBinContent(
-                            ibin + 1, bincontent / nSigEntries
-                        )
-                        lhistosig[index][iptBin].SetBinError(ibin + 1, 0.0)
-                else:
-                    print(
-                        "ERROR: no counts in signal distribution for var=%s, pt bin=%d"
-                        % (var, iptBin)
-                    )
-                if nBkgEntries != 0:
-                    for ibin in range(lhistobkg[index][iptBin].GetNbinsX()):
-                        bincontent = lhistobkg[index][iptBin].GetBinContent(ibin + 1)
-                        lhistobkg[index][iptBin].SetBinContent(
-                            ibin + 1, bincontent / nBkgEntries
-                        )
-                        lhistobkg[index][iptBin].SetBinError(ibin + 1, 0.0)
-                else:
-                    print(
-                        "ERROR: no counts in bkg distribution for var=%s, pt bin=%d"
-                        % (var, iptBin)
-                    )
+            hist_sig = lhistosig[index][iptBin]
+            hist_bkg = lhistobkg[index][iptBin]
 
-            lhistosig[index][iptBin].SetLineColor(2)
-            lhemptyvar[index].Draw()
-            lhistosig[index][iptBin].Draw("histsame")
-            lhistobkg[index][iptBin].Draw("histsame")
-            latexa = TLatex()
-            latexa.SetTextSize(0.055)
-            latexa.SetTextFont(42)
-            latexa.SetTextAlign(3)
-            if dologx == 0:
-                latexa.DrawLatex(
-                    xmin + (xmax - xmin) / 4.0,
-                    ymax * 2.5,
-                    "%.1f < p_{T} (%s) < %.1f GeV"
-                    % (lptMin[iptBin], latexcand, lptMax[iptBin]),
-                )
-            leglist[iptBin].AddEntry(
-                lhistosig[index][iptBin],
-                f"Sig before norm ({int(nSigEntries)} entries)",
-            )
-            leglist[iptBin].AddEntry(
-                lhistobkg[index][iptBin],
-                f"Bkg before norm ({int(nBkgEntries)} entries)",
-            )
-            leglist[iptBin].Draw()
-        saveCanvas(cpt, f"distribution_{var}", *formats, outputdir=f"output_{hadron}")
+            if rebin > 1:
+                hist_sig.RebinX(rebin)
+                hist_bkg.RebinX(rebin)
+
+            nSigEntries = hist_sig.Integral()
+            nBkgEntries = hist_bkg.Integral()
+
+            if not nSigEntries or not nBkgEntries:
+                print(f"ERROR: Found empty signal or background distribution for variable={var} in pT bin={iptBin}")
+                continue
+
+
+            if normalized:
+                for ibin in range(hist_sig.GetNbinsX()):
+                    bincontent = hist_sig.GetBinContent(ibin + 1)
+                    hist_sig.SetBinContent(ibin + 1, bincontent / nSigEntries)
+                    hist_sig.SetBinError(ibin + 1, 0.0)
+
+                for ibin in range(hist_bkg.GetNbinsX()):
+                    bincontent = hist_bkg.GetBinContent(ibin + 1)
+                    hist_bkg.SetBinContent(ibin + 1, bincontent / nBkgEntries)
+                    hist_bkg.SetBinError(ibin + 1, 0.0)
+
+            figure.define_plot(x_log=dologx, y_log=dolog)
+
+            figure.add_object(hist_sig, style=style_sig, label=f"Sig before norm ({int(nSigEntries)} entries)")
+            figure.add_object(hist_bkg, style=style_bkg, label=f"Bkg before norm ({int(nBkgEntries)} entries)")
+            figure.add_text(f"{lptMin[iptBin]:.1f} GeV < p_{{T}} ({latexcand}) < {lptMax[iptBin]:.1f} GeV")
+
+        figure.create()
+        for save_paths in makeSavePaths(cpt, f"distribution_{var}", *formats, outputdir=f"output_{hadron}"):
+            figure.save(save_paths)
 
 
 distr_studies()
