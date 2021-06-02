@@ -6,8 +6,9 @@ import yaml
 from ROOT import TH2F, TCanvas, TFile, TLatex, TLegend, gPad, gROOT, gStyle
 
 from hfplot.plot_spec_root import ROOTFigure
+from hfplot.style import ROOTStyle1D
 
-def makeSavePaths(canvas, title, *fileFormats, outputdir="outputPlots"):
+def makeSavePaths(title, *fileFormats, outputdir="outputPlots"):
     """
     Saves the canvas as the desired output format in an output directory (default = outputPlots)
     """
@@ -56,9 +57,9 @@ def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
     style_sig = ROOTStyle1D()
     style_sig.linecolor = 2
     style_sig.draw_option = "HIST"
-    bkg_style = ROOTStyle1D()
-    bkg_style.linecolor = 1
-    bkg_style.draw_option = "HIST"
+    style_bkg = ROOTStyle1D()
+    style_bkg.linecolor = 1
+    style_bkg.draw_option = "HIST"
 
 
     for index, var in enumerate(lvarlist):
@@ -83,18 +84,20 @@ def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
             )
             lhistosigvar.append(hsig_px)
             lhistobkgvar.append(hbkg_px)
-            # if index == 0:
-            #     ptMin = hsig.GetYaxis().GetBinLowEdge(iptBin + 1)
-            #     ptMax = ptMin + hsig.GetYaxis().GetBinWidth(iptBin + 1)
-            #     lptMin.append(ptMin)
-            #     lptMax.append(ptMax)
+            if index == 0:
+                ptMin = hsig.GetYaxis().GetBinLowEdge(iptBin + 1)
+                ptMax = ptMin + hsig.GetYaxis().GetBinWidth(iptBin + 1)
+                lptMin.append(ptMin)
+                lptMax.append(ptMax)
 
         lhistosig.append(lhistosigvar)
         lhistobkg.append(lhistobkgvar)
 
     for index, var in enumerate(lvarlist):
         n_cols_rows = ceil(sqrt(nPtBins))
-        figure = ROOTFigure(n_cols_rows, n_cols_rows, row_margin=0.05, column_margin=0.05)
+        figure = ROOTFigure(n_cols_rows, n_cols_rows, row_margin=0.05, column_margin=0.05, size=(1500, 900))
+        figure.axis_label_size(0.001)
+        figure.axis_title_size(0.001)
 
         dolog = ldolog[index]
         dologx = ldologx[index]
@@ -130,10 +133,10 @@ def distr_studies(hadron="Xi_cc", collision="pp14p0", yrange="absy1p44"):
 
             figure.add_object(hist_sig, style=style_sig, label=f"Sig before norm ({int(nSigEntries)} entries)")
             figure.add_object(hist_bkg, style=style_bkg, label=f"Bkg before norm ({int(nBkgEntries)} entries)")
-            figure.add_text(f"{lptMin[iptBin]:.1f} GeV < p_{{T}} ({latexcand}) < {lptMax[iptBin]:.1f} GeV")
+            figure.add_text(f"{lptMin[iptBin]:.1f} GeV < p_{{T}} ({latexcand}) < {lptMax[iptBin]:.1f} GeV", 0.1, 0.1)
 
         figure.create()
-        for save_paths in makeSavePaths(cpt, f"distribution_{var}", *formats, outputdir=f"output_{hadron}"):
+        for save_paths in makeSavePaths(f"distribution_{var}", *formats, outputdir=f"output_{hadron}"):
             figure.save(save_paths)
 
 
