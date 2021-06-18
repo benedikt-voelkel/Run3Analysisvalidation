@@ -1,51 +1,53 @@
 #!/usr/bin/env python
 
-from ROOT import TCanvas, TFile, gROOT, gStyle
+from ROOT import TFile
 
-path_file = "../codeHF/AnalysisResults_O2.root"
-
-gStyle.SetOptStat(0)
-gStyle.SetErrorX(0)
-gStyle.SetFrameLineWidth(1)
-gStyle.SetTitleSize(0.045, "x")
-gStyle.SetTitleSize(0.045, "y")
-gStyle.SetMarkerSize(1)
-gStyle.SetLabelOffset(0.015, "x")
-gStyle.SetLabelOffset(0.02, "y")
-gStyle.SetTickLength(-0.02, "x")
-gStyle.SetTickLength(-0.02, "y")
-gStyle.SetTitleOffset(1.1, "x")
-gStyle.SetTitleOffset(1.0, "y")
-
-gROOT.SetBatch(True)
+from hfplot.plot_spec_root import ROOTFigure
+from hfplot.root_helpers import create_name
+from hfplot.style import StyleObject1D
 
 
-def saveCanvas(canvas, title):
-    format_list = [".pdf", ".png"]
-    for fileFormat in format_list:
-        canvas.SaveAs(title + fileFormat)
+
+# gStyle.SetOptStat(0)
+# gStyle.SetErrorX(0)
+# gStyle.SetFrameLineWidth(1)
+# gStyle.SetTitleSize(0.045, "x")
+# gStyle.SetTitleSize(0.045, "y")
+# gStyle.SetMarkerSize(1)
+# gStyle.SetLabelOffset(0.015, "x")
+# gStyle.SetLabelOffset(0.02, "y")
+# gStyle.SetTickLength(-0.02, "x")
+# gStyle.SetTickLength(-0.02, "y")
+# gStyle.SetTitleOffset(1.1, "x")
+# gStyle.SetTitleOffset(1.0, "y")
 
 
-def kinematic_plots(var, particle, detector, hp):
-    fileo2 = TFile(path_file)
-    cres = TCanvas("cres", "resolution distribution")
-    cres.SetCanvasSize(1600, 1000)
-    cres.cd()
-    num = fileo2.Get(
-        "qa-tracking-rejection-%s/tracking%ssel%s/%seta" % (particle, detector, hp, var)
-    )
-    den = fileo2.Get("qa-tracking-rejection-%s/tracking/%seta" % (particle, var))
-    # gPad.SetLogz()
-    num.Divide(den)
-    num.Draw("coltz")
-    num.GetYaxis().SetTitle("#eta")
-    num.GetYaxis().SetTitleOffset(1.0)
-    num.GetZaxis().SetRangeUser(0.01, 1)
-    num.SetTitle("Fraction of %s selected by %s as %s" % (particle, detector, hp))
-    saveCanvas(
-        cres, "contamination/%seta_%sSelfrom%sas%s" % (var, particle, detector, hp)
-    )
 
+
+# def kinematic_plots(var, particle, detector, hp):
+#     fileo2 = TFile(PATH_FILE)
+#     cres = TCanvas("cres", "resolution distribution")
+#     cres.SetCanvasSize(1600, 1000)
+#     cres.cd()
+#     num = fileo2.Get(
+#         "qa-tracking-rejection-%s/tracking%ssel%s/%seta" % (particle, detector, hp, var)
+#     )
+#     den = fileo2.Get("qa-tracking-rejection-%s/tracking/%seta" % (particle, var))
+#     # gPad.SetLogz()
+#     num.Divide(den)
+#     num.Draw("coltz")
+#     num.GetYaxis().SetTitle("#eta")
+#     num.GetYaxis().SetTitleOffset(1.0)
+#     num.GetZaxis().SetRangeUser(0.01, 1)
+#     num.SetTitle("Fraction of %s selected by %s as %s" % (particle, detector, hp))
+#     saveCanvas(
+#         cres, "contamination/%seta_%sSelfrom%sas%s" % (var, particle, detector, hp)
+#     )
+
+
+PATH_FILE = "../codeHF/AnalysisResults_O2.root"
+
+EXTENSIONS_IMAGE = (".pdf", ".png")
 
 def ratioparticle(
     var="pt",
@@ -55,55 +57,52 @@ def ratioparticle(
     selden="RICHSelHpElLoose",
     label="e/#pi",
 ):
-    fileo2 = TFile(path_file)
-    cres = TCanvas("cres", "resolution distribution")
-    cres.SetCanvasSize(1600, 1000)
-    cres.cd()
-    cres.SetLogy()
-
-    num2d = fileo2.Get("qa-rejection-general/h%s%s/%seta" % (numname, selnum, var))
-    den2d = fileo2.Get("qa-rejection-general/h%s%s/%seta" % (denname, selden, var))
-    num = num2d.ProjectionX("num", 1, num2d.GetXaxis().GetNbins())
-    den = den2d.ProjectionX("den", 1, den2d.GetXaxis().GetNbins())
+    # Read and prepare histograms
+    fileo2 = TFile(PATH_FILE)
+    num2d = fileo2.Get(f"qa-rejection-general/h{numname}{selnum}/{var}eta")
+    den2d = fileo2.Get(f"qa-rejection-general/h{denname}{selden}/{var}eta")
+    num = num2d.ProjectionX(create_name(num2d), 1, num2d.GetXaxis().GetNbins())
+    den = den2d.ProjectionX(create_name(den2d), 1, den2d.GetXaxis().GetNbins())
     num.Divide(den)
-    num.Draw("coltz")
-    num.GetYaxis().SetTitle(label)
-    num.GetXaxis().SetTitle("p_{T}")
-    # num.SetMinimum(0.001)
-    # num.SetMaximum(2.0)
-    num.GetYaxis().SetTitleOffset(1.0)
-    # num.GetZaxis().SetRangeUser(0.01, 1)
-    # nameresult = "Fraction of %s selected by %s over %s selected by %s" % (num,selnum,den,selden)
-    canvas = "Fractionof%s%sOver%s%s" % (numname, selnum, denname, selden)
-    # num.SetTitle(nameresult)
-    saveCanvas(cres, "rejection/%s" % (canvas))
+
+    # Define the figure
+    figure = ROOTFigure(1, 1, size=(1600, 900))
+    figure.define_plot(y_log=True, title="resolution distribution")
+    figure.add_object(num, style=StyleObject1D(draw_options="colz"))
+    figure.axes("x", title="p_{T}")
+    figure.axes("y", title=label, title_offset=1.4)
+    figure.create()
+
+    # Save
+    save_path = f"rejection/FractionOf_{numname}_{selnum}_Over_{denname}_{selden}"
+    for ext in EXTENSIONS_IMAGE:
+        figure.save(f"{save_path}{ext}")
 
 
 def is_e_not_pi_plots(particle):
-    fileo2 = TFile(path_file)
+    fileo2 = TFile(PATH_FILE)
     task = "qa-rejection-general"
-    folder_gm = "h%sRICHSelHpElTight" % particle
-    folder_alt = "h%sRICHSelHpElTightAlt" % particle
-    folder_diff = "h%sRICHSelHpElTightAltDiff" % particle
     hist = "pteta"
-    hist_gm = fileo2.Get("%s/%s/%s" % (task, folder_gm, hist))
-    hist_gm.SetTitle("%s isRICHElTight" % particle)
-    hist_alt = fileo2.Get("%s/%s/%s" % (task, folder_alt, hist))
-    hist_alt.SetTitle("%s isElectronAndNotPion" % particle)
-    hist_diff = fileo2.Get("%s/%s/%s" % (task, folder_diff, hist))
-    hist_diff.SetTitle("%s isRICHElTight != isElectronAndNotPion" % particle)
-    cepi = TCanvas("cepi", "e not pi selection")
-    cepi.SetCanvasSize(1600, 1000)
-    cepi.Divide(2, 2)
-    cepi.cd(1)
-    hist_gm.Draw("colz")
-    cepi.cd(2)
-    hist_alt.Draw("colz")
-    cepi.cd(3)
-    hist_diff.Draw("colz")
-    # num.GetYaxis().SetTitleOffset(1.0)
-    # num.GetZaxis().SetRangeUser(0.01, 1)
-    saveCanvas(cepi, "contamination/is_e_not_pi_%s" % particle)
+
+    # Extract histograms
+    hist_gm = fileo2.Get(f"{task}/h{particle}RICHSelHpElTight/{hist}")
+    hist_alt = fileo2.Get(f"{task}/h{particle}RICHSelHpElTightAlt/{hist}")
+    hist_diff = fileo2.Get(f"{task}/h{particle}RICHSelHpElTightAltDiff/{hist}")
+
+    # Define the figure
+    style = StyleObject1D(draw_options="colz")
+    figure = ROOTFigure(2, 2, size=(1600, 900))
+    figure.define_plot(title=f"{particle} isRICHElTight")
+    figure.add_object(hist_gm, style=style)
+    figure.define_plot(title=f"{particle} isElectronAndNotPion")
+    figure.add_object(hist_alt, style=style)
+    figure.define_plot(title=f"{particle} isRICHElTight != isElectronAndNotPion")
+    figure.add_object(hist_diff, style=style)
+    figure.create()
+
+    save_path = f"contamination/is_e_not_pi_{particle}"
+    for ext in EXTENSIONS_IMAGE:
+        figure.save(f"{save_path}{ext}")
 
 
 # kinematic_plots("p", "pion", "MID", "Muon")
